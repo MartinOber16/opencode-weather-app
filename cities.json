@@ -1,0 +1,27 @@
+{
+  "defaultCity": "Ottawa",
+  "unit": "C",
+  "cities": [
+    {
+      "name": "Madrid",
+      "latitude": 40.4165,
+      "longitude": -3.70256,
+      "country": "España",
+      "admin1": "Comunidad Autónoma de Madrid"
+    },
+    {
+      "name": "Ōtawa",
+      "latitude": 35.22313,
+      "longitude": 139.63672,
+      "country": "Japón",
+      "admin1": "prefectura de Kanagawa"
+    },
+    {
+      "name": "Ottawa",
+      "latitude": 45.41117,
+      "longitude": -75.69812,
+      "country": "Canadá",
+      "admin1": "Ontario"
+    }
+  ]
+}

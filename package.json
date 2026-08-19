@@ -1,12 +1,20 @@
 {
-  "name": "02-weather",
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  }
+	"name": "02-weather",
+	"module": "src/index.ts",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"build": "bun build --compile src/index.ts --outfile weather",
+		"start": "bun run src/index.ts",
+		"dev": "bun run src/index.ts --watch"
+	},
+	"devDependencies": {
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"dependencies": {
+		"@inquirer/prompts": "^8.6.0"
+	}
 }

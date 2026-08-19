@@ -27,6 +27,13 @@ https://api.open-meteo.com/v1/forecast?latitude=45.41117&longitude=-75.69812&cur
 
 ```bash
 bun init
+bun add @inquirer/prompts
+```
+
+## Ejecutar
+
+```bash
+bun start
 ```
 
 ### Ejemplo del menú
