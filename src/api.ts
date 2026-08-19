@@ -1,4 +1,4 @@
-import type { City, GeocodingResponse, WeatherResponse } from "./types";
+import type { City, GeocodingResponse, WeatherResponse, DailyWeatherResponse } from "./types";
 
 const GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search";
 const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
@@ -25,4 +25,17 @@ export async function getWeather(
     throw new Error(`Error al obtener clima: ${res.statusText}`);
   }
   return res.json() as Promise<WeatherResponse>;
+}
+
+export async function getDailyForecast(
+  city: City,
+  unit: "C" | "F"
+): Promise<DailyWeatherResponse> {
+  const unitParam = unit === "C" ? "celsius" : "fahrenheit";
+  const url = `${FORECAST_URL}?latitude=${city.latitude}&longitude=${city.longitude}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&temperature_unit=${unitParam}&timezone=auto`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Error al obtener pronóstico: ${res.statusText}`);
+  }
+  return res.json() as Promise<DailyWeatherResponse>;
 }

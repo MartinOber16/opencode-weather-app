@@ -1,7 +1,8 @@
-import { select, input, confirm } from "@inquirer/prompts";
-import type { City, Settings, GeocodingResult, WeatherResponse } from "./types";
+import { select, input } from "@inquirer/prompts";
+import type { City, Settings, GeocodingResult, WeatherResponse, DailyWeatherResponse } from "./types";
 import { loadSettings, saveSettings } from "./storage";
-import { searchCities, getWeather } from "./api";
+import { searchCities, getWeather, getDailyForecast } from "./api";
+import { cyan, yellow, green, red, bold, dim } from "./colors";
 
 const WEATHER_CODES: Record<number, string> = {
   0: "Despejado",
@@ -34,6 +35,8 @@ const WEATHER_CODES: Record<number, string> = {
   99: "Tormenta con granizo fuerte",
 };
 
+const LINE = cyan("════════════════════════════════════════");
+
 function displayWeather(city: City, data: WeatherResponse, unit: "C" | "F") {
   const unitSymbol = unit === "C" ? "°C" : "°F";
   const condition = WEATHER_CODES[data.current.weather_code] || "Desconocido";
@@ -41,15 +44,48 @@ function displayWeather(city: City, data: WeatherResponse, unit: "C" | "F") {
     ? `${city.name}, ${city.admin1}`
     : `${city.name}, ${city.country}`;
 
-  console.log("\n════════════════════════════════════════");
-  console.log(`  ${location}`);
-  console.log("════════════════════════════════════════");
-  console.log(`  Temperatura:     ${data.current.temperature_2m}${unitSymbol}`);
-  console.log(`  Sensación:       ${data.current.apparent_temperature}${unitSymbol}`);
+  console.log(`\n${LINE}`);
+  console.log(`  ${cyan(bold(location))}`);
+  console.log(LINE);
+  console.log(`  Temperatura:     ${yellow(`${data.current.temperature_2m}${unitSymbol}`)}`);
+  console.log(`  Sensación:       ${yellow(`${data.current.apparent_temperature}${unitSymbol}`)}`);
   console.log(`  Humedad:         ${data.current.relative_humidity_2m}%`);
   console.log(`  Viento:          ${data.current.wind_speed_10m} km/h`);
   console.log(`  Condición:       ${condition}`);
-  console.log("════════════════════════════════════════\n");
+  console.log(`${LINE}\n`);
+}
+
+function displayDailyForecast(city: City, data: DailyWeatherResponse, unit: "C" | "F") {
+  const unitSymbol = unit === "C" ? "°C" : "°F";
+  const location = city.admin1
+    ? `${city.name}, ${city.admin1}`
+    : `${city.name}, ${city.country}`;
+
+  console.log(`\n${LINE}`);
+  console.log(`  ${cyan(bold(`${location} — Pronóstico 7 días`))}`);
+  console.log(LINE);
+  console.log(`  ${dim("Fecha")}    ${dim("Condición")}          ${dim("Mín")}    ${dim("Máx")}    ${dim("Lluvia")}  ${dim("Viento")}`);
+  console.log(`  ${dim("─".repeat(60))}`);
+
+  for (let i = 0; i < data.daily.time.length; i++) {
+    const date = data.daily.time[i]!;
+    const day = date.split("-").slice(1).reverse().join("/");
+    const code = data.daily.weather_code[i]!;
+    const condition = WEATHER_CODES[code] || "Desconocido";
+    const min = data.daily.temperature_2m_min[i]!;
+    const max = data.daily.temperature_2m_max[i]!;
+    const rain = data.daily.precipitation_sum[i]!;
+    const wind = data.daily.wind_speed_10m_max[i]!;
+
+    const conditionPad = condition.padEnd(20);
+    const rainStr = rain > 0 ? green(`${rain}mm`) : `${rain}mm`;
+
+    console.log(
+      `  ${day}  ${conditionPad} ${yellow(`${min}${unitSymbol}`)}  ${yellow(`${max}${unitSymbol}`)}  ${rainStr}    ${wind} km/h`
+    );
+  }
+
+  console.log(`${LINE}\n`);
 }
 
 function formatCityLabel(city: City): string {
@@ -64,30 +100,30 @@ async function handleWeatherDefault(settings: Settings) {
     (c) => c.name === settings.defaultCity
   );
   if (!city) {
-    console.log("\n  No hay ciudad default configurada.\n");
+    console.log(`\n  ${red("No hay ciudad default configurada.")}\n`);
     return;
   }
   try {
     const data = await getWeather(city, settings.unit);
     displayWeather(city, data, settings.unit);
   } catch (e) {
-    console.log(`\n  Error: ${e instanceof Error ? e.message : e}\n`);
+    console.log(`\n  ${red(`Error: ${e instanceof Error ? e.message : e}`)}\n`);
   }
 }
 
 async function handleWeatherAll(settings: Settings) {
   if (settings.cities.length === 0) {
-    console.log("\n  No hay ciudades guardadas. Agrega una primero.\n");
+    console.log(`\n  ${red("No hay ciudades guardadas. Agrega una primero.")}\n`);
     return;
   }
-  console.log(`\n  Mostrando clima de ${settings.cities.length} ciudad(es)...\n`);
+  console.log(`\n  ${cyan(`Mostrando clima de ${settings.cities.length} ciudad(es)...`)}\n`);
   for (const city of settings.cities) {
     try {
       const data = await getWeather(city, settings.unit);
       displayWeather(city, data, settings.unit);
     } catch (e) {
       console.log(
-        `  Error al obtener clima de ${city.name}: ${e instanceof Error ? e.message : e}\n`
+        `  ${red(`Error al obtener clima de ${city.name}: ${e instanceof Error ? e.message : e}`)}\n`
       );
     }
   }
@@ -102,7 +138,7 @@ async function handleAddCity(settings: Settings): Promise<boolean> {
   try {
     const response = await searchCities(query.trim());
     if (!response.results || response.results.length === 0) {
-      console.log("\n  No se encontraron resultados.\n");
+      console.log(`\n  ${red("No se encontraron resultados.")}\n`);
       return false;
     }
 
@@ -124,7 +160,7 @@ async function handleAddCity(settings: Settings): Promise<boolean> {
         c.longitude === selected.longitude
     );
     if (alreadyExists) {
-      console.log("\n  Esa ciudad ya está guardada.\n");
+      console.log(`\n  ${red("Esa ciudad ya está guardada.")}\n`);
       return false;
     }
 
@@ -139,20 +175,20 @@ async function handleAddCity(settings: Settings): Promise<boolean> {
 
     if (!settings.defaultCity) {
       settings.defaultCity = newCity.name;
-      console.log(`\n  Ciudad agregada y establecida como default.\n`);
+      console.log(`\n  ${green("Ciudad agregada y establecida como default.")}\n`);
     } else {
-      console.log(`\n  Ciudad agregada correctamente.\n`);
+      console.log(`\n  ${green("Ciudad agregada correctamente.")}\n`);
     }
     return true;
   } catch (e) {
-    console.log(`\n  Error: ${e instanceof Error ? e.message : e}\n`);
+    console.log(`\n  ${red(`Error: ${e instanceof Error ? e.message : e}`)}\n`);
     return false;
   }
 }
 
 async function handleDeleteCity(settings: Settings): Promise<boolean> {
   if (settings.cities.length === 0) {
-    console.log("\n  No hay ciudades guardadas.\n");
+    console.log(`\n  ${red("No hay ciudades guardadas.")}\n`);
     return false;
   }
 
@@ -170,13 +206,13 @@ async function handleDeleteCity(settings: Settings): Promise<boolean> {
   if (settings.defaultCity === selected) {
     settings.defaultCity = settings.cities[0]?.name || "";
   }
-  console.log(`\n  Ciudad eliminada.\n`);
+  console.log(`\n  ${green("Ciudad eliminada.")}\n`);
   return true;
 }
 
 async function handleSetDefault(settings: Settings): Promise<boolean> {
   if (settings.cities.length === 0) {
-    console.log("\n  No hay ciudades guardadas.\n");
+    console.log(`\n  ${red("No hay ciudades guardadas.")}\n`);
     return false;
   }
 
@@ -191,7 +227,7 @@ async function handleSetDefault(settings: Settings): Promise<boolean> {
   });
 
   settings.defaultCity = selected;
-  console.log(`\n  Ciudad default establecida: ${selected}\n`);
+  console.log(`\n  ${green(`Ciudad default establecida: ${selected}`)}\n`);
   return true;
 }
 
@@ -204,22 +240,47 @@ async function handleSettings(settings: Settings): Promise<boolean> {
     ],
   });
   settings.unit = newUnit;
-  console.log(`\n  Unidad cambiada a ${newUnit === "C" ? "°C" : "°F"}\n`);
+  console.log(`\n  ${green(`Unidad cambiada a ${newUnit === "C" ? "°C" : "°F"}`)}\n`);
   return true;
+}
+
+async function handleDailyForecast(settings: Settings) {
+  if (settings.cities.length === 0) {
+    console.log(`\n  ${red("No hay ciudades guardadas. Agrega una primero.")}\n`);
+    return;
+  }
+
+  const choices = settings.cities.map((c) => ({
+    name: formatCityLabel(c),
+    value: c,
+  }));
+
+  const selected = await select({
+    message: "Ciudad para el pronóstico:",
+    choices,
+  });
+
+  try {
+    const data = await getDailyForecast(selected, settings.unit);
+    displayDailyForecast(selected, data, settings.unit);
+  } catch (e) {
+    console.log(`\n  ${red(`Error: ${e instanceof Error ? e.message : e}`)}\n`);
+  }
 }
 
 export async function runMenu() {
   let settings = await loadSettings();
 
-  console.log("\n════════════════════════════════════════");
-  console.log("         WEATHER CLI");
-  console.log("════════════════════════════════════════");
+  console.log(`\n${LINE}`);
+  console.log(`         ${cyan(bold("WEATHER CLI"))}`);
+  console.log(LINE);
 
   let running = true;
   while (running) {
     const cityCount = settings.cities.length;
     const option = await select({
       message: "Selecciona una opción:",
+      loop: false,
       choices: [
         {
           name: "1. Clima de ciudad default",
@@ -240,6 +301,10 @@ export async function runMenu() {
         {
           name: "5. Establecer ciudad default",
           value: "set_default",
+        },
+        {
+          name: "6. Pronóstico 7 días",
+          value: "daily_forecast",
         },
         {
           name: `8. Ajustes (${settings.unit === "C" ? "°C" : "°F"})`,
@@ -270,6 +335,9 @@ export async function runMenu() {
       case "set_default":
         changed = await handleSetDefault(settings);
         break;
+      case "daily_forecast":
+        await handleDailyForecast(settings);
+        break;
       case "settings":
         changed = await handleSettings(settings);
         break;
@@ -283,5 +351,5 @@ export async function runMenu() {
     }
   }
 
-  console.log("\n  ¡Hasta luego!\n");
+  console.log(`\n  ${green("¡Hasta luego!")}\n`);
 }

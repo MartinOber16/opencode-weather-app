@@ -1,5 +1,5 @@
 {
-  "defaultCity": "Ottawa",
+  "defaultCity": "Buenos Aires",
   "unit": "C",
   "cities": [
     {
@@ -10,18 +10,18 @@
       "admin1": "Comunidad Autónoma de Madrid"
     },
     {
-      "name": "Ōtawa",
-      "latitude": 35.22313,
-      "longitude": 139.63672,
-      "country": "Japón",
-      "admin1": "prefectura de Kanagawa"
-    },
-    {
       "name": "Ottawa",
       "latitude": 45.41117,
       "longitude": -75.69812,
       "country": "Canadá",
       "admin1": "Ontario"
+    },
+    {
+      "name": "Buenos Aires",
+      "latitude": -34.61315,
+      "longitude": -58.37723,
+      "country": "Argentina",
+      "admin1": "Ciudad Autónoma de Buenos Aires"
     }
   ]
 }

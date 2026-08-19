@@ -17,13 +17,20 @@
 - `src/storage.ts` — JSON file persistence (`cities.json`) for cities and settings
 - `src/api.ts` — OpenMeteo API calls (geocoding + forecast)
 - `src/menu.ts` — Interactive CLI menu with `@inquirer/prompts`
+- `src/colors.ts` — Terminal color helpers via `picocolors`
 - `src/index.ts` — Entry point, calls `runMenu()`
+
+## Dependencies
+
+- `@inquirer/prompts` — interactive CLI prompts
+- `picocolors` — terminal colors (cyan=menu, yellow=temp, green=ok, red=error)
 
 ## API
 
 The app uses OpenMeteo (no API key required):
 1. Geocoding: `https://geocoding-api.open-meteo.com/v1/search?name=CITY&count=5&language=es&format=json`
-2. Forecast: `https://api.open-meteo.com/v1/forecast?latitude=LAT&longitude=LON&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&temperature_unit={celsius|fahrenheit}`
+2. Current forecast: `https://api.open-meteo.com/v1/forecast?latitude=LAT&longitude=LON&current=...&temperature_unit={celsius|fahrenheit}`
+3. Daily forecast: same endpoint with `&daily=weather_code,temperature_2m_max,temperature_2m_min,...&timezone=auto`
 
 ## Persistence
 

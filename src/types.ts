@@ -47,3 +47,17 @@ export interface WeatherResponse {
     wind_speed_10m: string;
   };
 }
+
+export interface DailyForecast {
+  time: string[];
+  weather_code: number[];
+  temperature_2m_max: number[];
+  temperature_2m_min: number[];
+  precipitation_sum: number[];
+  wind_speed_10m_max: number[];
+}
+
+export interface DailyWeatherResponse {
+  daily: DailyForecast;
+  daily_units: Record<string, string>;
+}
