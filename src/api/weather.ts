@@ -1,18 +1,6 @@
-import type { City, GeocodingResponse, WeatherResponse, DailyWeatherResponse } from "./types";
-
-const GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search";
-const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
-
-export async function searchCities(
-  name: string
-): Promise<GeocodingResponse> {
-  const url = `${GEOCODING_URL}?name=${encodeURIComponent(name)}&count=5&language=es&format=json`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Error al buscar ciudad: ${res.statusText}`);
-  }
-  return res.json() as Promise<GeocodingResponse>;
-}
+import type { City } from "../types/City";
+import type { WeatherResponse, DailyWeatherResponse } from "../types/Weather";
+import { FORECAST_URL } from "../utils/constants";
 
 export async function getWeather(
   city: City,

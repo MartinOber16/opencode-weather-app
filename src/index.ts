@@ -1,3 +1,3 @@
-import { runMenu } from "./menu";
+import { runMenu } from "./presentation/menu";
 
 runMenu();

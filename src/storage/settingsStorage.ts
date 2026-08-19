@@ -1,6 +1,5 @@
-import type { Settings } from "./types";
-
-const FILE_PATH = "./cities.json";
+import type { Settings } from "../types/City";
+import { FILE_PATH } from "../utils/constants";
 
 const DEFAULT_SETTINGS: Settings = {
   defaultCity: "",
