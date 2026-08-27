@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Extraer versión de package.json
+        id: version
+        run: echo "VERSION=$(node -p "require('./package.json').version")" >> "$GITHUB_ENV"
+
+      - name: Comprobar si el tag ya existe
+        id: check_tag
+        run: |
+          git fetch --tags
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Construir binario
+        if: steps.check_tag.outputs.exists == 'false'
+        run: bun run build
+
+      - name: Renombrar binario
+        if: steps.check_tag.outputs.exists == 'false'
+        run: mv weather "weather-v$VERSION-linux-x64"
+
+      - name: Crear release
+        if: steps.check_tag.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: v${{ env.VERSION }}
+          body: |
+            ## Notas del release v${{ env.VERSION }}
+
+            - Binario compilado con Bun (Linux x64): `weather-v${{ env.VERSION }}-linux-x64`
+            - Se incluyen los tests (`bun test`) previos a la compilación.
+          files: weather-v${{ env.VERSION }}-linux-x64
